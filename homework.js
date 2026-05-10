@@ -22,6 +22,11 @@ const ADMIN_TOKEN = process.env.API_KEY;
  * @returns {Promise<Array>} - 回傳 products 陣列
  */
 async function getProducts() {
+	const response = await fetch(`${BASE_URL}/api/livejs/v1/customer/${API_PATH}/products`);
+	//console.log(response);
+	const data = await response.json();
+	//console.log(data.products);
+	return data.products;
 	// 請實作此函式
 	// 提示：
 	// 1. 使用 fetch() 發送 GET 請求
@@ -35,6 +40,15 @@ async function getProducts() {
  */
 async function getCart() {
 	// 請實作此函式
+	const response = await fetch(`${BASE_URL}/api/livejs/v1/customer/${API_PATH}/carts`);
+	//console.log(response);
+	const data = await response.json();
+	//console.log(data.products);
+	return {
+		carts: data.carts,
+		total: data.total,
+		finalTotal: data.finalTotal,
+	}
 }
 
 /**
@@ -48,6 +62,22 @@ async function getProductsSafe() {
 	// 2. 檢查 response.ok 判斷是否成功
 	// 3. 成功回傳 { success: true, data: [...] }
 	// 4. 失敗回傳 { success: false, error: '錯誤訊息' }
+	try {
+    const response = await fetch(
+      `${BASE_URL}/api/livejs/v1/customer/${API_PATH}/products`,
+    );
+	const data = await response.json();
+
+    // 檢查 HTTP 狀態碼
+    if (!response.ok) {
+      // response.ok 為 false 表示狀態碼不是 2xx
+      return {success: false,error: error.message };
+    }
+    return {success: true,data: data.products,};
+	} catch (error) {
+		// 處理網路錯誤、JSON 解析錯誤等
+		return {success: false,error: error.message,};
+	}
 }
 
 // ========================================
@@ -67,6 +97,12 @@ async function addToCart(productId, quantity) {
 	// 2. body 格式：{ data: { productId: "xxx", quantity: 1 } }
 	// 3. 記得設定 headers: { 'Content-Type': 'application/json' }
 	// 4. body 要用 JSON.stringify() 轉換
+	const response = await fetch(`${BASE_URL}/api/livejs/v1/customer/${API_PATH}/carts`,{
+		method: "POST",
+		headers: {"Content-Type": "application/json",},
+		body: JSON.stringify({data: {productId, quantity}}),
+	})
+	return await response.json();
 }
 
 /**
@@ -80,6 +116,12 @@ async function updateCartItem(cartId, quantity) {
 	// 提示：
 	// 1. 發送 PATCH 請求
 	// 2. body 格式：{ data: { id: "購物車ID", quantity: 數量 } }
+	const response = await fetch(`${BASE_URL}/api/livejs/v1/customer/${API_PATH}/carts`,{
+		method: "PATCH",
+		headers: {"Content-Type": "application/json",},
+		body: JSON.stringify({data: {id: cartId, quantity}}),
+	})
+	return await response.json();
 }
 
 /**
@@ -90,6 +132,11 @@ async function updateCartItem(cartId, quantity) {
 async function removeCartItem(cartId) {
 	// 請實作此函式
 	// 提示：發送 DELETE 請求到 /carts/{id}
+	const response = await fetch(`${BASE_URL}/api/livejs/v1/customer/${API_PATH}/carts/${cartId}`,{
+		method: "DELETE",
+	});
+	const data = await response.json();
+	return data;
 }
 
 /**
@@ -99,6 +146,10 @@ async function removeCartItem(cartId) {
 async function clearCart() {
 	// 請實作此函式
 	// 提示：發送 DELETE 請求到 /carts
+	const response = await fetch(`${BASE_URL}/api/livejs/v1/customer/${API_PATH}/carts`,{
+		method: "DELETE",
+	});
+	return await response.json();
 }
 
 // ========================================
@@ -151,35 +202,56 @@ if (require.main === module) {
 		}
 
 		// 任務一測試
-		console.log("--- 任務一：基礎 fetch ---");
+		// console.log("--- 任務一：基礎 fetch ---");
+		// try {
+		// 	const products = await getProducts();
+		// 	console.log(
+		// 		"getProducts:",
+		// 		products ? `成功取得 ${products.length} 筆產品` : "回傳 undefined",
+		// 	);
+		// } catch (error) {
+		// 	console.log("getProducts 錯誤:", error.message);
+		// }
+
+		// try {
+		// 	const cart = await getCart();
+		// 	console.log(
+		// 		"getCart:",
+		// 		cart ? `購物車有 ${cart.carts?.length || 0} 筆商品` : "回傳 undefined",
+		// 	);
+		// } catch (error) {
+		// 	console.log("getCart 錯誤:", error.message);
+		// }
+
+		// try {
+		// 	const result = await getProductsSafe();
+		// 	console.log(
+		// 		"getProductsSafe:",
+		// 		result?.success ? "成功" : result?.error || "回傳 undefined",
+		// 	);
+		// } catch (error) {
+		// 	console.log("getProductsSafe 錯誤:", error.message);
+		// }
+
 		try {
-			const products = await getProducts();
-			console.log(
-				"getProducts:",
-				products ? `成功取得 ${products.length} 筆產品` : "回傳 undefined",
-			);
+			const result = await addToCart("yDl3qIEvJjGl2016RSat", 3);
+			console.log("addToCart:", result);
 		} catch (error) {
-			console.log("getProducts 錯誤:", error.message);
+			console.log("addToCart 錯誤:", error.message);
 		}
 
 		try {
-			const cart = await getCart();
-			console.log(
-				"getCart:",
-				cart ? `購物車有 ${cart.carts?.length || 0} 筆商品` : "回傳 undefined",
-			);
+			const result = await updateCartItem("NweumJfyGEYa0JOMAOKd", 1);
+			console.log("updateCartItem:", result);
 		} catch (error) {
-			console.log("getCart 錯誤:", error.message);
+			console.log("updateCartItem 錯誤:", error.message);
 		}
 
 		try {
-			const result = await getProductsSafe();
-			console.log(
-				"getProductsSafe:",
-				result?.success ? "成功" : result?.error || "回傳 undefined",
-			);
+			const result = await clearCart();
+			console.log("clearCart:", result);
 		} catch (error) {
-			console.log("getProductsSafe 錯誤:", error.message);
+			console.log("clearCart 錯誤:", error.message);
 		}
 
 		console.log("\n=== 測試結束 ===");
